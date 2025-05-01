@@ -1,0 +1,341 @@
+{
+  "Uuid": "df979d53-13bf-4a74-8d27-6eb2108ef060",
+  "IsCustomNode": false,
+  "Description": "",
+  "Name": "Get PipeSystemType",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "import clr\r\nimport System\r\nimport math\r\nfrom System.Collections.Generic import *\r\n\r\nclr.AddReference(\"ProtoGeometry\")\r\nfrom Autodesk.DesignScript.Geometry import *\r\n\r\nclr.AddReference('RevitAPI')\r\nimport Autodesk\r\nfrom Autodesk.Revit.DB import *\r\n\r\nclr.AddReference('RevitAPIUI')\r\nfrom Autodesk.Revit.UI import *\r\nfrom Autodesk.Revit.UI.Selection import *\r\n\r\nclr.AddReference(\"RevitNodes\")\r\nimport Revit\r\n\r\nclr.ImportExtensions(Revit.Elements)\r\nclr.ImportExtensions(Revit.GeometryConversion)\r\n\r\nclr.AddReference(\"RevitServices\")\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\nfrom RevitServices.Transactions import TransactionManager\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nview = doc.ActiveView\r\nuidoc = DocumentManager.Instance.CurrentUIApplication.ActiveUIDocument\r\n\r\n\"\"\"--------------------------Main Code--------------------------\"\"\"\r\n# Lấy danh sách tất cả Pipe System Types trong dự án\r\npipeSystem = list(FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_PipingSystem).WhereElementIsElementType())\r\n\r\npipeSystemName = [ps.LookupParameter(\"Type Name\").AsValueString() for ps in pipeSystem]\r\n\r\n# Xuất danh sách tất cả Pipe System Types\r\nOUT = dict(zip(pipeSystemName,pipeSystem))\r\n",
+      "Engine": "IronPython2",
+      "EngineName": "IronPython2",
+      "VariableInputPorts": true,
+      "Id": "e337352cdec24cb2b1159ed7a7a1b9f9",
+      "Inputs": [
+        {
+          "Id": "4e46882b8878405a8a6b6bf5364b6557",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "e57f0212bcf841d694d49ea81319d94f",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "DesignScript.Builtin.Dictionary.Keys",
+      "Id": "4854411c936742df9b0b1f98c9b31968",
+      "Inputs": [
+        {
+          "Id": "867683ec642649249658bcc24e34b719",
+          "Name": "dictionary",
+          "Description": "DesignScript.Builtin.Dictionary",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "7eb1c0f89f674702af666691abb1a0df",
+          "Name": "keys",
+          "Description": "Keys of the Dictionary",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Produces the keys in a Dictionary.\n\nDictionary.Keys: string[]"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "DesignScript.Builtin.Dictionary.Values",
+      "Id": "0d4394c6a2044f50a23cb48c9fcd46f6",
+      "Inputs": [
+        {
+          "Id": "509a7d0a43dc44d586843b8f71d9126c",
+          "Name": "dictionary",
+          "Description": "DesignScript.Builtin.Dictionary",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "5863c5562db94cba9562bde7700365ec",
+          "Name": "values",
+          "Description": "Values of the dictionary",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Produces the values in a Dictionary.\n\nDictionary.Values: var[]..[]"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "DSCore.Object.Type@var",
+      "Id": "5fdd34ec59ba4a4e991f1e692c25521f",
+      "Inputs": [
+        {
+          "Id": "e9515af444ac473cbcbbb4074ab84632",
+          "Name": "object",
+          "Description": "Object to query type\n\nvar",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "1b4513bc5d524f049b5523b8e3f0af91",
+          "Name": "string",
+          "Description": "Type of object.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Returns the type of object represented as string.\n\nObject.Type (object: var): string"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "7b0dd32b7d924558912b00c85d14fbef",
+      "Inputs": [
+        {
+          "Id": "9c43bf3712044774b7db2f05bcf3215e",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "b0f2172ffdeb4c57b2e3f9bd42ae5f75",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualize the node's output"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "e1a03533776f4fd89d5bfec829937ffa",
+      "Inputs": [
+        {
+          "Id": "9dda51fe1cdf4129a0a4208280630979",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "04f7736b3ffa40d0b59846e2087e705e",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualize the node's output"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "e57f0212bcf841d694d49ea81319d94f",
+      "End": "509a7d0a43dc44d586843b8f71d9126c",
+      "Id": "0f97de9c4bd6421ea979de3acccdc75c",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "e57f0212bcf841d694d49ea81319d94f",
+      "End": "867683ec642649249658bcc24e34b719",
+      "Id": "1309aa7df3b24be2b6029a7d4d206b13",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "e57f0212bcf841d694d49ea81319d94f",
+      "End": "e9515af444ac473cbcbbb4074ab84632",
+      "Id": "1c7906ab97d84a47a11969f970527c59",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "7eb1c0f89f674702af666691abb1a0df",
+      "End": "9dda51fe1cdf4129a0a4208280630979",
+      "Id": "d7741689343649b5be99fdfa9eed2464",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "5863c5562db94cba9562bde7700365ec",
+      "End": "9c43bf3712044774b7db2f05bcf3215e",
+      "Id": "19bf00f007b8405db4281365bada2c11",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Thumbnail": "",
+  "GraphDocumentationURL": null,
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "Properties",
+      "Version": "2.16",
+      "Data": {}
+    },
+    {
+      "ExtensionGuid": "DFBD9CC0-DB40-457A-939E-8C8555555A9D",
+      "Name": "Generative Design",
+      "Version": "3.0",
+      "Data": {}
+    }
+  ],
+  "Author": "",
+  "Linting": {
+    "activeLinter": "None",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.16.2.5624",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Name": "Python Script",
+        "ShowGeometry": true,
+        "Id": "e337352cdec24cb2b1159ed7a7a1b9f9",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -777.27925222974181,
+        "Y": 69.212516095423183
+      },
+      {
+        "Name": "Dictionary.Keys",
+        "ShowGeometry": true,
+        "Id": "4854411c936742df9b0b1f98c9b31968",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -522.37685203533351,
+        "Y": 345.12131478316815
+      },
+      {
+        "Name": "Dictionary.Values",
+        "ShowGeometry": true,
+        "Id": "0d4394c6a2044f50a23cb48c9fcd46f6",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -500.89205225404294,
+        "Y": -31.049882883934004
+      },
+      {
+        "Name": "Object.Type",
+        "ShowGeometry": true,
+        "Id": "5fdd34ec59ba4a4e991f1e692c25521f",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -447.18005280081582,
+        "Y": -271.15068193619419
+      },
+      {
+        "Name": "Watch",
+        "ShowGeometry": true,
+        "Id": "7b0dd32b7d924558912b00c85d14fbef",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -108.18553314790711,
+        "Y": -104.50746918114316
+      },
+      {
+        "Name": "Watch",
+        "ShowGeometry": true,
+        "Id": "e1a03533776f4fd89d5bfec829937ffa",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -168.07192951490447,
+        "Y": 310.5741267970381
+      }
+    ],
+    "Annotations": [],
+    "X": 822.63801461897231,
+    "Y": 291.55652667979194,
+    "Zoom": 0.83780161710767165
+  }
+}

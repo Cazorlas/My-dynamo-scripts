@@ -1,0 +1,295 @@
+{
+  "Uuid": "b6c5ab9b-c3d7-461e-bb1a-6e63a95f3e33",
+  "IsCustomNode": false,
+  "Description": "",
+  "Name": "Intersect",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Revit.Element.IntersectsElement@Revit.Elements.Element[],Revit.Elements.Element[]",
+      "Id": "d67beaa57ea34e2a92c231e804e28dde",
+      "Inputs": [
+        {
+          "Id": "7f8c579a605047cd936d9cf8c22eb611",
+          "Name": "elementSetA",
+          "Description": "Input a list of Revit elements or LinkElements to perform the interference check.\n\nElement[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "7eddd98c956340479482fc568644121a",
+          "Name": "elementSetB",
+          "Description": "Input a list of Revit elements or LinkElements to test for interference against elementSetA.\n\nElement[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "66fdcb7aabcf41dfb3109ffc16f053af",
+          "Name": "ElementIntersectionResult[]",
+          "Description": "ElementIntersectionResult[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Finds intersections (clash detection) between two sets of elements or LinkElements. Each element in set A which intersects with any elements from set B is returned as an ElementIntersectionResult. Self-intersection is automatically prevented if the same element is found in both lists.\r\rThe node is optimized to output rapid results up to 99.5% faster than any other intersection technique. \r\rUse IsElementSupported to check that elements are supported by the node. \r\rVisit bimorph.com/bimorph-nodes for support\n\nElement.IntersectsElement (elementSetA: Element[], elementSetB: Element[]): ElementIntersectionResult[]"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Revit.BoundingBox.GetElementsIntersect@Autodesk.DesignScript.Geometry.BoundingBox,Revit.Elements.Element[],double",
+      "Id": "62861c49977548bc8bdb34e881f410d8",
+      "Inputs": [
+        {
+          "Id": "4af7bb23a6d54155a3c430ede8320d16",
+          "Name": "boundingBox",
+          "Description": "Input a Bounding Box.\n\nBoundingBox",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "3e8ee759d7ce4cc4bfe1ef230b9ab1a4",
+          "Name": "elements",
+          "Description": "Input a list of Revit elements.\n\nElement[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "6054fe0e36b2488782d7c767f7f80738",
+          "Name": "tolerance",
+          "Description": "Input a distance in active document units to control the match criteria in the geometry comparison. Use positive values to consider gaps, and negative values to consider overlaps.\n\ndouble\nDefault value : 0",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "10d08009c82f404b95afbb58cb35032f",
+          "Name": "Element[]",
+          "Description": "Element[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Filter and return Revit elements intersecting or inside a bounding box. Supports Bimorph LinkElements.\r\rUtilizes Revit's QuickFilter class for rapid results. \r\rVisit bimorph.com/bimorph-nodes for support\n\nBoundingBox.GetElementsIntersect (boundingBox: BoundingBox, elements: Element[], tolerance: double = 0): Element[]"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Revit.Element.IntersectsSolid@Autodesk.DesignScript.Geometry.Solid[],Revit.Elements.Element[]",
+      "Id": "487df030f7e844b98fe8d8a5bd62edd5",
+      "Inputs": [
+        {
+          "Id": "5317a1c15a6844798717a19b40816188",
+          "Name": "solids",
+          "Description": "Input a list of solid objects to perform the interference check.\n\nSolid[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "f05acd9f83544ecfbda9e29c94177ec0",
+          "Name": "elements",
+          "Description": "Input a list of Revit elements or LinkElements to test for interference against each of the solid objects.\n\nElement[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "853e25c085e948f695bc114f70786a16",
+          "Name": "SolidIntersectionResult[]",
+          "Description": "SolidIntersectionResult[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Finds intersections (clash detection) between Dynamo Solids and Revit elements or LinkElements. \r\rThe node is optimized to output rapid results up to 99.5% faster than any other intersection technique.\r\rUse IsElementSupported to check that elements are supported by the clash algorithms. \r\rVisit bimorph.com/bimorph-nodes for support\n\nElement.IntersectsSolid (solids: Solid[], elements: Element[]): SolidIntersectionResult[]"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Curve.SolidIntersection@Autodesk.DesignScript.Geometry.Solid,Autodesk.DesignScript.Geometry.Curve[],bool",
+      "Id": "cc8bb74e25c34da8822eba14eb9a5b50",
+      "Inputs": [
+        {
+          "Id": "bdfdf9914fe649b5a71b1174bfb2bee6",
+          "Name": "solid",
+          "Description": "Input a solid or list of solids.\n\nSolid",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "0c262c16fe9046d6834b2db77df81332",
+          "Name": "curves",
+          "Description": "Input a list of Curves to intersect the solid or solids.\n\nCurve[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "a1be59ac859c43d58b795207ac7fd40c",
+          "Name": "invert",
+          "Description": "True to return curve segments outside the solid. False to return curve segments inside the solid.\n\nbool\nDefault value : false",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "eb4c0cd2931347ddae1cfd231763ce14",
+          "Name": "CurveSolidIntersectionResult[]",
+          "Description": "CurveSolidIntersectionResult[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Finds and returns all intersecting curve segments between a solid and a list of curves. Setting invert to true has the reverse effect and trims curves that intersect the solid. \r\rVisit bimorph.com/bimorph-nodes for support\n\nCurve.SolidIntersection (solid: Solid, curves: Curve[], invert: bool = false): CurveSolidIntersectionResult[]"
+    }
+  ],
+  "Connectors": [],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [
+    {
+      "Name": "bimorphNodes",
+      "Version": "5.1.3",
+      "ReferenceType": "Package",
+      "Nodes": [
+        "d67beaa57ea34e2a92c231e804e28dde",
+        "62861c49977548bc8bdb34e881f410d8",
+        "487df030f7e844b98fe8d8a5bd62edd5",
+        "cc8bb74e25c34da8822eba14eb9a5b50"
+      ]
+    }
+  ],
+  "Thumbnail": "",
+  "GraphDocumentationURL": null,
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "Properties",
+      "Version": "2.16",
+      "Data": {}
+    },
+    {
+      "ExtensionGuid": "DFBD9CC0-DB40-457A-939E-8C8555555A9D",
+      "Name": "Generative Design",
+      "Version": "3.0",
+      "Data": {}
+    }
+  ],
+  "Author": "",
+  "Linting": {
+    "activeLinter": "None",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 100.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.16.2.5624",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "d67beaa57ea34e2a92c231e804e28dde",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Element.IntersectsElement",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 230.0,
+        "Y": 102.0
+      },
+      {
+        "Id": "62861c49977548bc8bdb34e881f410d8",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "BoundingBox.GetElementsIntersect",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 239.0,
+        "Y": 356.0
+      },
+      {
+        "Id": "487df030f7e844b98fe8d8a5bd62edd5",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Element.IntersectsSolid",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 692.0,
+        "Y": 114.0
+      },
+      {
+        "Id": "cc8bb74e25c34da8822eba14eb9a5b50",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Curve.SolidIntersection",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 630.0,
+        "Y": 491.0
+      }
+    ],
+    "Annotations": [],
+    "X": 0.0,
+    "Y": 0.0,
+    "Zoom": 1.0
+  }
+}
