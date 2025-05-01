@@ -1,0 +1,357 @@
+{
+  "Uuid": "55d83cdb-08af-41d8-80c1-23938b2d4c60",
+  "IsCustomNode": false,
+  "Description": "",
+  "Name": "Tổng diện tích bề mặt nhiều đối tượng",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Revit.Elements.Element.Faces",
+      "Id": "75c87d2865c543b5b9c129e0d2ace088",
+      "Inputs": [
+        {
+          "Id": "ca7c93968ff04472879710dd8b771201",
+          "Name": "element",
+          "Description": "Revit.Elements.Element",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "48701d17beaa40d3b5614813cd5903cc",
+          "Name": "Surface[]",
+          "Description": "Surface[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "The Faces in this Element\n\nElement.Faces: Surface[]"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "import clr\r\n\r\nclr.AddReference('RevitAPI')\r\nfrom Autodesk.Revit.DB import *\r\nfrom Autodesk.Revit.DB.Structure import *\r\n\r\nclr.AddReference('RevitAPIUI')\r\nfrom Autodesk.Revit.UI import *\r\n\r\nclr.AddReference('System')\r\nfrom System.Collections.Generic import List\r\n\r\nclr.AddReference('RevitNodes')\r\nimport Revit\r\nclr.ImportExtensions(Revit.GeometryConversion)\r\nclr.ImportExtensions(Revit.Elements)\r\n\r\nclr.AddReference('RevitServices')\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\nfrom RevitServices.Transactions import TransactionManager\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuidoc=DocumentManager.Instance.CurrentUIApplication.ActiveUIDocument\r\n\r\n# Lấy danh sách diện tích các bề mặt từ Dynamo\r\nelements_surfaces = IN[0]\r\n\r\n# Khởi tạo biến để lưu trữ tổng diện tích\r\nelements_total_area = []\r\n\r\n# Lặp qua các diện tích và tính tổng diện tích\r\nfor element_surfaces in elements_surfaces:\r\n\ttotal_area = 0\r\n\tfor surf in element_surfaces:\r\n\t\ttotal_area += surf.Area\r\n\telements_total_area.append(total_area/1000000)\r\n    \t\r\n# Trả về tổng diện tích (m2)\r\nOUT = elements_total_area",
+      "Engine": "IronPython2",
+      "VariableInputPorts": true,
+      "Id": "e1db85dc81604783971b1a1286d3ef24",
+      "Inputs": [
+        {
+          "Id": "fc788b3ff23245b499609b868868f68c",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "28d6123bc8a04484b8cd5412ea369739",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Revit.Elements.Element.SetParameterByName@string,var",
+      "Id": "96220627cd244e2e930a5af6889c10e5",
+      "Inputs": [
+        {
+          "Id": "f784dfc21a71493b86322b562a208a16",
+          "Name": "element",
+          "Description": "Revit.Elements.Element",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "57a27691b6a14c07ac96c04184af622a",
+          "Name": "parameterName",
+          "Description": "The name of the parameter to set.\n\nstring",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "41b5c4e6f71e4be98b26808e85e064f6",
+          "Name": "value",
+          "Description": "The value.\n\nvar",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "a3ccf2d939244736a4ca346570417080",
+          "Name": "Element",
+          "Description": "Element",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Set one of the element's parameters.\n\nElement.SetParameterByName (parameterName: string, value: var): Element"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "\"Area Insulation\";",
+      "Id": "66f309e69cf240e495a6919ecac1499b",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "2b542bf9adcc48aca26acac3db03ebf5",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "Dynamo.ComboNodes.DSModelElementsByCategorySelection, DSRevitNodesUI",
+      "SelectedIndex": 266,
+      "NodeType": "ExtensionNode",
+      "InstanceId": [
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-0004597f",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045af3",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045af4",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045af5",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045af6",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045af7",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045b03",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045b04",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045b05",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d06",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d12",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d13",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d14",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d15",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d16",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d17",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d18",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d19",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d1a",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d1b",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d1c",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d1d",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d1e",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d1f",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d20",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d21",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d22",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d23",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d24",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d25",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d26",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d27",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d28",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d29",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d2a",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d2b",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d2c",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d2d",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d2e",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d2f",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d30",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d31",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d32",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d33",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d34",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d35",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d36",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d37",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d38",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d39",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d3a",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d3b",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d3c",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d3d",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d3e",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d3f",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d40",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d41",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d42",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d43",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d44",
+        "38907d94-0dc1-41a3-85c1-58fff483a4f8-00045d45"
+      ],
+      "Id": "16ba012631324c37b603d308956e4faf",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "8703394c92fe4d0285eb26c5b9d4cf24",
+          "Name": "Elements",
+          "Description": "The selected elements.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "48701d17beaa40d3b5614813cd5903cc",
+      "End": "fc788b3ff23245b499609b868868f68c",
+      "Id": "1b0cec82b19c43bb9808966cdf7e4883"
+    },
+    {
+      "Start": "28d6123bc8a04484b8cd5412ea369739",
+      "End": "41b5c4e6f71e4be98b26808e85e064f6",
+      "Id": "a69921d7a58d44a2867cbec7b6b1316d"
+    },
+    {
+      "Start": "2b542bf9adcc48aca26acac3db03ebf5",
+      "End": "57a27691b6a14c07ac96c04184af622a",
+      "Id": "2c413a8cd4c840228a84e5ea976e3b2d"
+    },
+    {
+      "Start": "8703394c92fe4d0285eb26c5b9d4cf24",
+      "End": "ca7c93968ff04472879710dd8b771201",
+      "Id": "600a3be1091445229cee6f5152707bbc"
+    },
+    {
+      "Start": "8703394c92fe4d0285eb26c5b9d4cf24",
+      "End": "f784dfc21a71493b86322b562a208a16",
+      "Id": "049916aa442b454c9d7f7919a002b918"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Thumbnail": "",
+  "GraphDocumentationURL": null,
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "Properties",
+      "Version": "2.12",
+      "Data": {}
+    },
+    {
+      "ExtensionGuid": "DFBD9CC0-DB40-457A-939E-8C8555555A9D",
+      "Name": "Generative Design",
+      "Version": "3.0",
+      "Data": {}
+    }
+  ],
+  "Author": "None provided",
+  "Linting": {
+    "activeLinter": "None",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.12.0.5650",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Background Preview",
+      "EyeX": -8366.4482421875,
+      "EyeY": 9028.693359375,
+      "EyeZ": 11030.5693359375,
+      "LookX": 8340.8681640625,
+      "LookY": -9091.7470703125,
+      "LookZ": -10992.9365234375,
+      "UpX": 0.21661621332168579,
+      "UpY": 0.93358051776885986,
+      "UpZ": -0.28549078106880188
+    },
+    "NodeViews": [
+      {
+        "ShowGeometry": true,
+        "Name": "Element.Faces",
+        "Id": "75c87d2865c543b5b9c129e0d2ace088",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -675.64988187909353,
+        "Y": -1716.8551102108438
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Python Script",
+        "Id": "e1db85dc81604783971b1a1286d3ef24",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -278.99508647018973,
+        "Y": -1743.0686046472883
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Element.SetParameterByName",
+        "Id": "96220627cd244e2e930a5af6889c10e5",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 238.21193632043571,
+        "Y": -1484.6709030985705
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Code Block",
+        "Id": "66f309e69cf240e495a6919ecac1499b",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -125.97201799538408,
+        "Y": -1345.2557298043409
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Select Model Elements By Category",
+        "Id": "16ba012631324c37b603d308956e4faf",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -1112.9103996420517,
+        "Y": -1586.8198185539507
+      }
+    ],
+    "Annotations": [],
+    "X": 943.07612448641919,
+    "Y": 1340.3747798545442,
+    "Zoom": 0.69815351463658371
+  }
+}

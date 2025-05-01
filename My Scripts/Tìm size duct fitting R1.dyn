@@ -1,0 +1,745 @@
+{
+  "Uuid": "55d83cdb-08af-41d8-80c1-23938b2d4c60",
+  "IsCustomNode": false,
+  "Description": "",
+  "Name": "Tìm size duct fitting R1",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.ComboNodes.DSModelElementsByCategorySelection, DSRevitNodesUI",
+      "SelectedIndex": 183,
+      "SelectedString": "OST_DuctFitting",
+      "NodeType": "ExtensionNode",
+      "InstanceId": [
+        "55346a5a-1094-4b14-bf6e-bf1812ec2de0-0004caea",
+        "55346a5a-1094-4b14-bf6e-bf1812ec2de0-0004cb5f",
+        "55346a5a-1094-4b14-bf6e-bf1812ec2de0-0004cbdb",
+        "55346a5a-1094-4b14-bf6e-bf1812ec2de0-0004d323",
+        "55346a5a-1094-4b14-bf6e-bf1812ec2de0-0004d326",
+        "55346a5a-1094-4b14-bf6e-bf1812ec2de0-0004db5e"
+      ],
+      "Id": "e0b31bae28b14e24b016e87a6760c390",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "71d46cb9ecab4d0b840495d09e3ba282",
+          "Name": "Elements",
+          "Description": "The selected elements.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "import clr\r\nimport math\r\n\r\nclr.AddReference('RevitAPI')\r\nfrom Autodesk.Revit.DB import *\r\n\r\nclr.AddReference('RevitAPIUI')\r\nfrom Autodesk.Revit.UI import *\r\n\r\nclr.AddReference('System')\r\nfrom System.Collections.Generic import List\r\n\r\nclr.AddReference('RevitNodes')\r\nimport Revit\r\nclr.ImportExtensions(Revit.GeometryConversion)\r\nclr.ImportExtensions(Revit.Elements)\r\n\r\nclr.AddReference('RevitServices')\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\nfrom RevitServices.Transactions import TransactionManager\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuidoc = DocumentManager.Instance.CurrentUIApplication.ActiveUIDocument\r\n\r\n#tìm 3 diện tích mặt lớn nhất và index của nó\r\ndef find_largest_numbers(numbers):\r\n    if len(numbers) < 2:\r\n        raise ValueError(\"Danh sách phải có ít nhất 2 số\")\r\n\r\n    largest = second_largest = float('-inf')\r\n    index1 = index2 = -1\r\n\r\n    for i, number_ in enumerate(numbers):\r\n    \tnumber = round_to_nearest_number(number_)\r\n        if number > largest:\r\n            second_largest = largest\r\n            largest = number\r\n            index2 = index1\r\n            index1 = i\r\n        elif number > second_largest and number != largest:\r\n            second_largest = number\r\n            index2 = i\r\n    return largest, second_largest, index1, index2\r\n\r\n#làm tròn thành size của ống tròn\r\ndef find_closest_size(size):\r\n    min_diff = float('inf')  # Khởi tạo giá trị min_diff lớn vô cực\r\n    closest_size = size  # Khởi tạo kích thước gần nhất là giá trị tính toán ban đầu\r\n    for round_size in round_sizes:\r\n        diff = abs(round_size - size)\r\n        if diff < min_diff:\r\n            min_diff = diff\r\n            closest_size = round_size\r\n    return closest_size\r\n\r\ndef round_to_nearest_number(number):\r\n    if number < 50000:\r\n        return round(number / 1000) * 1000\r\n    elif 50000 <= number < 100000:\r\n        return round(number / 2000) * 2000\r\n    elif 100000 <= number < 250000:\r\n        return round(number / 5000) * 5000\r\n    elif 250000 <= number < 510000:\r\n        return round(number / 10000) * 10000\r\n    elif 510000 <= number < 1000000:\r\n        return round(number / 20000) * 20000\r\n    else:\r\n        return round(number / 30000) * 30000\r\n\r\ndef round_to_nearest_2000(number):\r\n    return round(number / 2000) * 2000\r\n\r\n#SO sanh 2 so tuong duong trong khoang 1%\r\ndef are_numbers_equal_within_1_percent(num1, num2):\r\n    # Tính giá trị trung bình của hai số\r\n    avg = (num1 + num2) / 2.0\r\n    \r\n    # Kiểm tra sự chênh lệch có nằm trong khoảng 1% hay không\r\n    return abs(num1 - num2) <= 0.01 * avg\r\n\r\ndef is_round_bending(fitting_type):\r\n    for round_bending_name in round_bending_names:\r\n        if round_bending_name in fitting_type:\r\n            return True\r\n    return False\r\n\r\ndef is_round_tee(fitting_type):\r\n    for round_tee_name in round_tee_names:\r\n        if round_tee_name in fitting_type:\r\n            return True\r\n    return False\r\n\r\ndef is_round_transition(fitting_type):\r\n    for round_transition_name in round_transition_names:\r\n        if round_transition_name in fitting_type:\r\n            return True\r\n    return False\r\n\r\nelements = IN[0]\r\nelements_Surfaces = IN[1]\r\n\r\n#out result\r\nsizes = []\r\n\r\n#data cua round duct\r\nround_sizes = [100, 125, 160, 200, 250, 315, 355, 400, 450, 500, 560, 630, 710, 800, 1000, 1120, 1250]\r\nround_bending_names = [\"BU:BU\",\"BKU:BKU\",\"BFU:BFU\",\"BKFU:BKFU\"]\r\nround_tee_names = [\"TCPU:TCPU\",\"TCU:TCU\"]\r\nround_transition_names = [\"RCLU:RCLU\",\"RCU:RCU\"]\r\n     \r\nfor i,element in enumerate(elements):\r\n    fitting_type = element.GetParameterValueByName(\"ObjectTypeOverride\")\r\n    faces = elements_Surfaces[i]\r\n    if faces is not None:#Kiem tra doi tuong co face khong\r\n        areas = []\r\n        for face in faces:\r\n            area = face.Area\r\n            areas.append(area)\r\n\r\n        if is_round_bending(fitting_type):\r\n            largest_area, second_largest_area, index1, index2 = find_largest_numbers(areas)\r\n            \r\n            size_largest = math.sqrt(largest_area * 4 / 3.14) \r\n            closest_size_largest = find_closest_size(size_largest)\r\n\r\n            sizes.append(\"Ø\" + str(int(closest_size_largest)))\r\n\r\n        elif is_round_transition(fitting_type):   \r\n            largest_area, second_largest_area, index1, index2 = find_largest_numbers(areas)\r\n            \r\n            size_largest = math.sqrt(largest_area * 4 / 3.14) \r\n            size_second_largest = math.sqrt(second_largest_area * 4 / 3.14) \r\n            closest_size_largest = find_closest_size(size_largest)\r\n            closest_size_second_largest = find_closest_size(size_second_largest)\r\n\r\n            sizes.append(\"Ø\" + str(int(closest_size_largest)) + \"-Ø\" + str(int(closest_size_second_largest)))\r\n\r\n        elif is_round_tee(fitting_type):   \r\n            largest_area, second_largest_area, index1, index2 = find_largest_numbers(areas)\r\n            \r\n            size_largest = math.sqrt(largest_area * 4 / 3.14) \r\n            closest_size_largest = find_closest_size(size_largest)\r\n\r\n            sizes.append(\"Ø\" + str(int(closest_size_largest)) + \"-Ø\" + str(int(closest_size_largest)) + \"-Ø\" + str(int(closest_size_largest)))\r\n           \r\n        elif \"ILRU:ILRU\" in fitting_type:\r\n            largest_area, second_largest_area, index1, index2 = find_largest_numbers(areas)\r\n\r\n            size_largest = math.sqrt(largest_area * 4 / 3.14) \r\n            closest_size_largest = find_closest_size(size_largest)\r\n\r\n            sizes.append(\"Ø\" + str(int(closest_size_largest)))\r\n\r\n        else:\r\n            sizes.append(\"Not found\")\r\n    else:\r\n        sizes.append(\"Not found\")\r\nOUT = sizes\r\n",
+      "Engine": "IronPython2",
+      "EngineName": "IronPython2",
+      "VariableInputPorts": true,
+      "Id": "9ff35c7a7fc24cacb5c307e07f05bbca",
+      "Inputs": [
+        {
+          "Id": "bdb20769f8d84579bd101337beef2952",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "35fdd77eb9b44d4d835bb6ec75512042",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "d6662dfe7ac344e5b135c56835029fbd",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Revit.Elements.Element.SetParameterByName@string,var",
+      "Id": "c77bac568163487298426fb82655c28b",
+      "Inputs": [
+        {
+          "Id": "34ce7e023afa4d3182c8adb4b9d721af",
+          "Name": "element",
+          "Description": "Revit.Elements.Element",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "0aaa7031d85543749f3feb67fbd531ed",
+          "Name": "parameterName",
+          "Description": "The name of the parameter to set.\n\nstring",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "f72c789dfdba433fbc0f82892925600d",
+          "Name": "value",
+          "Description": "The value.\n\nvar",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "dcbf79bde10d492080a9be2e718ada78",
+          "Name": "Element",
+          "Description": "Element",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Set one of the element's parameters.\n\nElement.SetParameterByName (parameterName: string, value: var): Element"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "\"Comments\";",
+      "Id": "a16d2f5578604ee688f3941a9ad5c58a",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "3ef8449845624a4299e38ecd604e81fa",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Autodesk.DesignScript.Geometry.Surface.PerimeterCurves",
+      "Id": "2a453591f04e423f878bdcaf61ad092f",
+      "Inputs": [
+        {
+          "Id": "03deb99d1c534102ad8aa6b3d126234f",
+          "Name": "surface",
+          "Description": "Autodesk.DesignScript.Geometry.Surface",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "4214e602fff1438bb8323b006c9a2269",
+          "Name": "Curve[]",
+          "Description": "Curve[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Return all the boundary Curves of the Surface.\n\nSurface.PerimeterCurves ( ): Curve[]"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Revit.Elements.Element.Faces",
+      "Id": "3e4dd1bc31584204b17a1f35da135a9c",
+      "Inputs": [
+        {
+          "Id": "3ddd6b14ec814f04990c0ae788f52d07",
+          "Name": "element",
+          "Description": "Revit.Elements.Element",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "a4a7bd5bb4e1424eaa30e6139aa3e540",
+          "Name": "Surface[]",
+          "Description": "Surface[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "The Faces in this Element\n\nElement.Faces: Surface[]"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "import clr\r\nimport math\r\n\r\nclr.AddReference('RevitAPI')\r\nfrom Autodesk.Revit.DB import *\r\n\r\nclr.AddReference('RevitAPIUI')\r\nfrom Autodesk.Revit.UI import *\r\n\r\nclr.AddReference('System')\r\nfrom System.Collections.Generic import List\r\n\r\nclr.AddReference('RevitNodes')\r\nimport Revit\r\nclr.ImportExtensions(Revit.GeometryConversion)\r\nclr.ImportExtensions(Revit.Elements)\r\n\r\nclr.AddReference('RevitServices')\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\nfrom RevitServices.Transactions import TransactionManager\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuidoc = DocumentManager.Instance.CurrentUIApplication.ActiveUIDocument\r\n\r\n# Data của round duct\r\nround_sizes = [100, 125, 160, 200, 250, 315, 355, 400, 450, 500, 560, 630, 710, 800, 1000, 1120, 1250]\r\n\r\n# Tìm 3 diện tích mặt lớn nhất và index của nó\r\ndef find_three_largest_numbers(numbers):\r\n    if len(numbers) < 3:\r\n        raise ValueError(\"Danh sách phải có ít nhất 3 số\")\r\n\r\n    largest = second_largest = third_largest = float('-inf')\r\n    index1 = index2 = -1\r\n\r\n    for i, number_ in enumerate(numbers):\r\n        number = round_to_nearest_5000(number_)\r\n        if number > largest:\r\n            third_largest = second_largest\r\n            second_largest = largest\r\n            largest = number\r\n            index2 = index1\r\n            index1 = i\r\n        elif number > second_largest and number != largest:\r\n            third_largest = second_largest\r\n            second_largest = number\r\n            index2 = i\r\n        elif number > third_largest and number != largest and number != second_largest:\r\n            third_largest = number\r\n    return largest, second_largest, third_largest, index1, index2\r\n\r\n# Làm tròn thành size của ống tròn\r\ndef find_closest_size(size):\r\n    min_diff = float('inf')\r\n    closest_size = size\r\n    for round_size in round_sizes:\r\n        diff = abs(round_size - size)\r\n        if diff < min_diff:\r\n            min_diff = diff\r\n            closest_size = round_size\r\n    return closest_size\r\n\r\n# Làm tròn 1 số theo 50\r\ndef round_to_nearest_50(number):\r\n    return round(number / 50) * 50\r\n\r\n# Làm tròn 1 số theo 5000\r\ndef round_to_nearest_5000(number):\r\n    return round(number / 5000) * 5000\r\n\r\n# Function to check if a face contains any arc curves\r\ndef face_contains_specific_curve(curves, type_curve):\r\n    for curve in curves:\r\n        if curve.GetType().Name == type_curve:\r\n            return True\r\n    return False\r\n\r\n# Function to find the largest face that does not contain any arc curves \r\ndef find_largest_non_arc_face(areas, curves, type_curve):\r\n    largest_area = second_area = 0\r\n    \r\n    for i, area_ in enumerate(areas):\r\n        area = round_to_nearest_5000(area_)\r\n        if not face_contains_specific_curve(curves[i], type_curve):\r\n            if area > largest_area:\r\n                largest_area = area\r\n                index_largest = i\r\n            elif area > second_area and area != largest_area:\r\n                second_area = area\r\n                index_second = i\r\n            elif area == largest_area:\r\n                index_second = i\r\n    \r\n    return index_largest, index_second\r\n\r\nelements = IN[0]\r\nelements_surfaces = IN[1]\r\nelements_curses = IN[2]\r\n\r\n# Đầu vào\r\nsizes = []\r\nname_LDR = \"LDR:LDR\"\r\nname_LORU = \"LORU:LORU\"\r\nname_LBXR = \"LBXR:LBXR\"\r\nname_LBR = \"LBR:LBR\"\r\nname_LEPR = \"LEPR:LEPR\"\r\n\r\nfor i, element in enumerate(elements):\r\n    fitting_type = element.GetParameterValueByName(\"ObjectTypeOverride\")\r\n    faces = elements_surfaces[i]\r\n    if faces is not None:\r\n        areas = []\r\n        for face in faces:\r\n            area = face.Area\r\n            areas.append(area)\r\n            \r\n        if name_LDR in fitting_type:\r\n            largest_area, second_largest_area, third_largest_area, index1, index2 = find_three_largest_numbers(areas)\r\n            \r\n            Length1 = round_to_nearest_50(elements_curses[i][index1][0].Length)\r\n            Length2 = round_to_nearest_50(elements_curses[i][index1][1].Length)\r\n            Length3 = round_to_nearest_50(elements_curses[i][index2][0].Length)\r\n            Length4 = round_to_nearest_50(elements_curses[i][index2][1].Length)\r\n            \r\n            if Length1 > Length2:\r\n                Length1_ = Length1\r\n                Length2_ = Length2\r\n            else:\r\n                Length1_ = Length2\r\n                Length2_ = Length1\r\n\r\n            if Length3 > Length4:\r\n                Length3_ = Length3\r\n                Length4_ = Length4\r\n            else:\r\n                Length3_ = Length4\r\n                Length4_ = Length3\r\n\r\n            size = str(int(Length1_)) + \"x\" + str(int(Length2_)) + \"-\" + str(int(Length3_)) + \"x\" + str(int(Length4_))\r\n            sizes.append(size)\r\n        #LORU giải thuật là tìm 2 mặt có diện tích lớn nhất và nhì rồi lấy curve Line và Circle của mặt để lấy kích thước\r\n        elif name_LORU in fitting_type:\r\n            largest_area, second_largest_area, third_largest_area, index1, index2 = find_three_largest_numbers(areas)\r\n            \r\n            type_curse_largest = elements_curses[i][index1][0].GetType().Name\r\n            type_curse_second = elements_curses[i][index2][0].GetType().Name\r\n            if type_curse_largest == \"Line\" and type_curse_second == \"Circle\":\r\n                Length1 = round_to_nearest_50(elements_curses[i][index1][0].Length)\r\n                Length2 = round_to_nearest_50(elements_curses[i][index1][1].Length)\r\n                if Length1 > Length2:\r\n                    Length1_ = Length1\r\n                    Length2_ = Length2\r\n                else:\r\n                    Length1_ = Length2\r\n                    Length2_ = Length1\r\n                round_size = find_closest_size(elements_curses[i][index2][0].Radius*2)\r\n                size = str(int(Length1_)) + \"x\" + str(int(Length2_)) + \"-Ø\" + str(int(round_size))\r\n            elif type_curse_largest == \"Circle\" and type_curse_second == \"Line\":\r\n                Length1 = round_to_nearest_50(elements_curses[i][index2][0].Length)\r\n                Length2 = round_to_nearest_50(elements_curses[i][index2][1].Length)\r\n                round_size = find_closest_size(elements_curses[i][index1][0].Radius*2)\r\n                if Length1 > Length2:\r\n                    Length1_ = Length1\r\n                    Length2_ = Length2\r\n                else:\r\n                    Length1_ = Length2\r\n                    Length2_ = Length1\r\n                size = str(int(Length1_)) + \"x\" + str(int(Length2_)) + \"-Ø\" + str(int(round_size))\r\n            else:\r\n                size = \"Unknown\"\r\n            sizes.append(size)\r\n        \r\n        #LBXR giải thuật là tìm mặt ko chứa curve arc và có diện tích lớn nhất\r\n        elif name_LBXR in fitting_type:\r\n            index_largest, index_second = find_largest_non_arc_face(areas, elements_curses[i], \"Arc\")\r\n            Length1 = round_to_nearest_50(elements_curses[i][index_largest][0].Length)\r\n            Length2 = round_to_nearest_50(elements_curses[i][index_largest][1].Length)\r\n            size = str(int(Length1)) + \"x\" + str(int(Length2)) + \"-\" + str(int(Length1)) + \"x\" + str(int(Length2))\r\n            sizes.append(size)\r\n        #LBR giải thuật là tìm mặt ko chứa curve arc và có diện tích lớn nhì\r\n        elif name_LBR in fitting_type:\r\n            index_largest, index_second = find_largest_non_arc_face(areas, elements_curses[i], \"Arc\")\r\n            Length1 = round_to_nearest_50(elements_curses[i][index_second][0].Length)\r\n            Length2 = round_to_nearest_50(elements_curses[i][index_second][1].Length)\r\n            size = str(int(Length1)) + \"x\" + str(int(Length2)) + \"-\" + str(int(Length1)) + \"x\" + str(int(Length2))\r\n            sizes.append(size)\r\n        elif name_LEPR in fitting_type:\r\n            index_largest, index_second = find_largest_non_arc_face(areas, elements_curses[i], \"Arc\")\r\n            Length1 = round_to_nearest_50(elements_curses[i][index_largest][0].Length)\r\n            Length2 = round_to_nearest_50(elements_curses[i][index_largest][1].Length)\r\n            if Length1 > Length2:\r\n                Length1_ = Length1\r\n                Length2_ = Length2\r\n            else:\r\n                Length1_ = Length2\r\n                Length2_ = Length1\r\n            size = str(int(Length1_)) + \"x\" + str(int(Length2_)) + \"-\" + str(int(Length1_)) + \"x\" + str(int(Length2_))\r\n            sizes.append(size)\r\n\r\n        else:\r\n            sizes.append(\"Not found\")\r\n    else:\r\n        sizes.append(\"Not found\")\r\n\r\nOUT = sizes\r\n",
+      "Engine": "IronPython2",
+      "EngineName": "IronPython2",
+      "VariableInputPorts": true,
+      "Id": "5c0e4077da844f07adb8b690f7c0e8e7",
+      "Inputs": [
+        {
+          "Id": "02c49e2516df42c181150acb4bf9ad53",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "3f5d3f39f84f447785cec620ed559c34",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "f278aff6d46a4eff8832d5ff305869c9",
+          "Name": "IN[2]",
+          "Description": "Input #2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "8e63b8dafd194e77bc8209a8a71bab24",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "import clr\r\nimport math\r\n\r\nclr.AddReference('RevitAPI')\r\nfrom Autodesk.Revit.DB import *\r\n\r\nclr.AddReference('RevitAPIUI')\r\nfrom Autodesk.Revit.UI import *\r\n\r\nclr.AddReference('System')\r\nfrom System.Collections.Generic import List\r\n\r\nclr.AddReference('RevitNodes')\r\nimport Revit\r\nclr.ImportExtensions(Revit.GeometryConversion)\r\nclr.ImportExtensions(Revit.Elements)\r\n\r\nclr.AddReference('RevitServices')\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\nfrom RevitServices.Transactions import TransactionManager\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuidoc = DocumentManager.Instance.CurrentUIApplication.ActiveUIDocument\r\n\r\nelements = IN[0]\r\nelement_s = []\r\nname_LDR = \"LDR:LDR\"\r\nname_LORU = \"LORU:LORU\"\r\nname_LBXR = \"LBXR:LBXR\"\r\nname_LBR = \"LBR:LBR\"\r\nname_LEPR = \"LEPR:LEPR\"\r\n\r\nfor i,element in enumerate(elements):\r\n    fitting_type = element.GetParameterValueByName(\"ObjectTypeOverride\")\r\n    if name_LDR in fitting_type or name_LORU in fitting_type or name_LBXR in fitting_type or name_LBR in fitting_type or name_LEPR in fitting_type:\r\n    \telement_s.append(element)\r\nOUT = element_s\r\n",
+      "Engine": "IronPython2",
+      "EngineName": "IronPython2",
+      "VariableInputPorts": true,
+      "Id": "eca010b4aae7476e947da99af27b6db9",
+      "Inputs": [
+        {
+          "Id": "4d24768a1f0240bebf25a1ddd356e808",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "c8044fdb154d4122b0a012f7e1e74fea",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "import clr\r\nimport math\r\n\r\nclr.AddReference('RevitAPI')\r\nfrom Autodesk.Revit.DB import *\r\n\r\nclr.AddReference('RevitAPIUI')\r\nfrom Autodesk.Revit.UI import *\r\n\r\nclr.AddReference('System')\r\nfrom System.Collections.Generic import List\r\n\r\nclr.AddReference('RevitNodes')\r\nimport Revit\r\nclr.ImportExtensions(Revit.GeometryConversion)\r\nclr.ImportExtensions(Revit.Elements)\r\n\r\nclr.AddReference('RevitServices')\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\nfrom RevitServices.Transactions import TransactionManager\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuidoc = DocumentManager.Instance.CurrentUIApplication.ActiveUIDocument\r\n\r\n\r\ndef is_round_bending(fitting_type):\r\n    for round_bending_name in round_bending_names:\r\n        if round_bending_name in fitting_type:\r\n            return True\r\n    return False\r\n\r\ndef is_round_tee(fitting_type):\r\n    for round_tee_name in round_tee_names:\r\n        if round_tee_name in fitting_type:\r\n            return True\r\n    return False\r\n\r\ndef is_round_transition(fitting_type):\r\n    for round_transition_name in round_transition_names:\r\n        if round_transition_name in fitting_type:\r\n            return True\r\n    return False\r\n\r\nelements = IN[0]\r\nround_bending_names = [\"BU:BU\",\"BKU:BKU\",\"BFU:BFU\",\"BKFU:BKFU\"]\r\nround_tee_names = [\"TCPU:TCPU\",\"TCU:TCU\"]\r\nround_transition_names = [\"RCLU:RCLU\",\"RCU:RCU\"]\r\n\r\n\r\nelement_s = []\r\n\r\nfor i,element in enumerate(elements):\r\n    fitting_type = element.GetParameterValueByName(\"ObjectTypeOverride\")\r\n    if is_round_bending(fitting_type) or is_round_tee(fitting_type) or is_round_transition(fitting_type) or \"ILRU:ILRU\" in fitting_type:\r\n    \telement_s.append(element)\r\nOUT = element_s\r\n",
+      "Engine": "IronPython2",
+      "EngineName": "IronPython2",
+      "VariableInputPorts": true,
+      "Id": "fd306896d20545b5a716204be0b4257b",
+      "Inputs": [
+        {
+          "Id": "428e11ab53f148ff9bb0aeaccc7b8e6c",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "f8e22b015e2d49d68b9b2be253f6bf81",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Revit.Elements.Element.Faces",
+      "Id": "a16b0e5f208542b4bca6cffff6d450c4",
+      "Inputs": [
+        {
+          "Id": "655d2a18617d4729a5f6c145ed8d6770",
+          "Name": "element",
+          "Description": "Revit.Elements.Element",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "ea061205a4f541f0a1c2430ab56f6557",
+          "Name": "Surface[]",
+          "Description": "Surface[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "The Faces in this Element\n\nElement.Faces: Surface[]"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "\"Comments\";",
+      "Id": "1f82211363474a07b8d91e47d9d1e2e3",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "9edeaf47e88b4874a4be7c1bcd363bb2",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Revit.Elements.Element.SetParameterByName@string,var",
+      "Id": "ecbf491374344ba9b8e86f3be1c76b8d",
+      "Inputs": [
+        {
+          "Id": "f2524afd594548eea5b602df74af5ae3",
+          "Name": "element",
+          "Description": "Revit.Elements.Element",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "ed2e746c014949679c0bb9ba2d7f0cd3",
+          "Name": "parameterName",
+          "Description": "The name of the parameter to set.\n\nstring",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "7675e2d7521146f99be2006b2355da63",
+          "Name": "value",
+          "Description": "The value.\n\nvar",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "2f79076991054ed2b13591f610f83d39",
+          "Name": "Element",
+          "Description": "Element",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Set one of the element's parameters.\n\nElement.SetParameterByName (parameterName: string, value: var): Element"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Autodesk.DesignScript.Geometry.Surface.Area",
+      "Id": "6f19aac247e348bd89a5e6f285427433",
+      "Inputs": [
+        {
+          "Id": "9240f7be56614c9283684aa868302b6a",
+          "Name": "surface",
+          "Description": "Autodesk.DesignScript.Geometry.Surface",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "35292d4e755d41eb9d782e2a19387de9",
+          "Name": "double",
+          "Description": "double",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Returns the total surface area.\n\nSurface.Area: double"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "71d46cb9ecab4d0b840495d09e3ba282",
+      "End": "4d24768a1f0240bebf25a1ddd356e808",
+      "Id": "524f26d3ac2540d687684ff510c32789",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "71d46cb9ecab4d0b840495d09e3ba282",
+      "End": "428e11ab53f148ff9bb0aeaccc7b8e6c",
+      "Id": "903fcccfe54b4fcca9cc2a57e51fce9b",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "d6662dfe7ac344e5b135c56835029fbd",
+      "End": "f72c789dfdba433fbc0f82892925600d",
+      "Id": "292d2a1f39be4a588d7a7dd9b945331f",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "3ef8449845624a4299e38ecd604e81fa",
+      "End": "0aaa7031d85543749f3feb67fbd531ed",
+      "Id": "c86c4e291dcd412f93f4c9e7bb9b7998",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "4214e602fff1438bb8323b006c9a2269",
+      "End": "f278aff6d46a4eff8832d5ff305869c9",
+      "Id": "b3ba728135a8428a90306bae22cba7d6",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "a4a7bd5bb4e1424eaa30e6139aa3e540",
+      "End": "03deb99d1c534102ad8aa6b3d126234f",
+      "Id": "62ffefc984c445aa90fdc3d749932a8a",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "a4a7bd5bb4e1424eaa30e6139aa3e540",
+      "End": "3f5d3f39f84f447785cec620ed559c34",
+      "Id": "963ba24214034648b50c8deca3088b6e",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "8e63b8dafd194e77bc8209a8a71bab24",
+      "End": "7675e2d7521146f99be2006b2355da63",
+      "Id": "7488bc56859f47438b628b5003d3d798",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "c8044fdb154d4122b0a012f7e1e74fea",
+      "End": "02c49e2516df42c181150acb4bf9ad53",
+      "Id": "435c6643fb2f447592263ebe72b34935",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "c8044fdb154d4122b0a012f7e1e74fea",
+      "End": "3ddd6b14ec814f04990c0ae788f52d07",
+      "Id": "fd9c32e416d24f1fa438ba77f0616ac6",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "c8044fdb154d4122b0a012f7e1e74fea",
+      "End": "f2524afd594548eea5b602df74af5ae3",
+      "Id": "d3ad6f9e6e2f4ae5b2b1bc9b6de53232",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "f8e22b015e2d49d68b9b2be253f6bf81",
+      "End": "bdb20769f8d84579bd101337beef2952",
+      "Id": "f4bbd18dbe3c4dd79276a9f94ef4118f",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "f8e22b015e2d49d68b9b2be253f6bf81",
+      "End": "655d2a18617d4729a5f6c145ed8d6770",
+      "Id": "7ebd0eb6999f4bd4a26d4bf89c44fade",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "f8e22b015e2d49d68b9b2be253f6bf81",
+      "End": "34ce7e023afa4d3182c8adb4b9d721af",
+      "Id": "f89cf285cd93498081d6990ec2a41505",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "ea061205a4f541f0a1c2430ab56f6557",
+      "End": "35fdd77eb9b44d4d835bb6ec75512042",
+      "Id": "c0e89c9148ec4cf1a7ed3a3df0f2e323",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "ea061205a4f541f0a1c2430ab56f6557",
+      "End": "9240f7be56614c9283684aa868302b6a",
+      "Id": "044fab8701f14b1aa824ee91bbd8eacf",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "9edeaf47e88b4874a4be7c1bcd363bb2",
+      "End": "ed2e746c014949679c0bb9ba2d7f0cd3",
+      "Id": "44eed6976e6d46acb2fb8c7cfcb5310c",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Thumbnail": "",
+  "GraphDocumentationURL": null,
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "Properties",
+      "Version": "2.12",
+      "Data": {}
+    },
+    {
+      "ExtensionGuid": "DFBD9CC0-DB40-457A-939E-8C8555555A9D",
+      "Name": "Generative Design",
+      "Version": "3.0",
+      "Data": {}
+    }
+  ],
+  "Author": "None provided",
+  "Linting": {
+    "activeLinter": "None",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.16.1.2727",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Background Preview",
+      "EyeX": -22463.70703125,
+      "EyeY": 24395.041015625,
+      "EyeZ": 29610.205078125,
+      "LookX": 22438.126953125,
+      "LookY": -24458.095703125,
+      "LookZ": -29572.572265625,
+      "UpX": 0.21661621332168579,
+      "UpY": 0.93358051776885986,
+      "UpZ": -0.28549078106880188
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Name": "Select Model Elements By Category",
+        "ShowGeometry": true,
+        "Id": "e0b31bae28b14e24b016e87a6760c390",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -1531.9367351427395,
+        "Y": -2046.6153730873305
+      },
+      {
+        "Name": "Round_Names",
+        "ShowGeometry": true,
+        "Id": "9ff35c7a7fc24cacb5c307e07f05bbca",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -184.41567660833209,
+        "Y": -2313.2928590399929
+      },
+      {
+        "Name": "Element.SetParameterByName",
+        "ShowGeometry": true,
+        "Id": "c77bac568163487298426fb82655c28b",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 475.9787662865,
+        "Y": -2346.4466049147636
+      },
+      {
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Id": "a16d2f5578604ee688f3941a9ad5c58a",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 193.9113969384677,
+        "Y": -2405.2245504352613
+      },
+      {
+        "Name": "Surface.PerimeterCurves",
+        "ShowGeometry": true,
+        "Id": "2a453591f04e423f878bdcaf61ad092f",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -331.07703194905,
+        "Y": -1244.9776492271806
+      },
+      {
+        "Name": "Element.Faces",
+        "ShowGeometry": true,
+        "Id": "3e4dd1bc31584204b17a1f35da135a9c",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -695.73827237281728,
+        "Y": -1392.4868835792988
+      },
+      {
+        "Name": "Rectangular_Names",
+        "ShowGeometry": true,
+        "Id": "5c0e4077da844f07adb8b690f7c0e8e7",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 115.74727439117055,
+        "Y": -1353.0808986819156
+      },
+      {
+        "Name": "Filter2",
+        "ShowGeometry": true,
+        "Id": "eca010b4aae7476e947da99af27b6db9",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -1041.1821437603405,
+        "Y": -1274.2570064899185
+      },
+      {
+        "Name": "Filter1",
+        "ShowGeometry": true,
+        "Id": "fd306896d20545b5a716204be0b4257b",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -1003.7075739038519,
+        "Y": -2317.9388676932581
+      },
+      {
+        "Name": "Element.Faces",
+        "ShowGeometry": true,
+        "Id": "a16b0e5f208542b4bca6cffff6d450c4",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -616.77970849891562,
+        "Y": -2224.9243861630489
+      },
+      {
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Id": "1f82211363474a07b8d91e47d9d1e2e3",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 407.8020693674099,
+        "Y": -1321.9015384271411
+      },
+      {
+        "Name": "Element.SetParameterByName",
+        "ShowGeometry": true,
+        "Id": "ecbf491374344ba9b8e86f3be1c76b8d",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 630.08334738978579,
+        "Y": -1338.9812141585512
+      },
+      {
+        "Name": "Surface.Area",
+        "ShowGeometry": true,
+        "Id": "6f19aac247e348bd89a5e6f285427433",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -320.47006188644696,
+        "Y": -2008.1286635786694
+      }
+    ],
+    "Annotations": [],
+    "X": 703.38657225188217,
+    "Y": 1422.0125183100947,
+    "Zoom": 0.57334393482101131
+  }
+}
